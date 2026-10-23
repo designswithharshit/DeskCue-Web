@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f0e6">
+  <meta name="description" content="A simple task planner for DeskCue Box reminders.">
+  <title>DeskCue — Task planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="DeskCue home"><span class="brand-mark">dc<span>•</span></span><span>DeskCue <small>YOUR DAY, IN RHYTHM</small></span></a>
+    <div class="topbar-right"><span class="cloud-status"><i id="connectionDot"></i><span id="connectionText">Not connected</span></span><button id="signOutBtn" class="text-button hidden" type="button">Sign out ↗</button></div>
+  </header>
+
+  <main class="page-wrap">
+    <section id="setupBanner" class="notice notice-warn hidden" role="alert">
+      <strong>One quick setup step</strong>
+      <p>Open <code>config.js</code> and add your Supabase Project URL and publishable key. See the README for exact steps.</p>
+    </section>
+
+    <section id="authView" class="auth-layout">
+      <div class="intro-copy">
+        <div class="eyebrow"><span class="sparkle">✳</span> A calmer way to stay on track</div>
+        <h1>Make room for<br><em>what matters.</em></h1>
+        <p class="lead">Plan your day here. DeskCue Box can use the same task list to remind you at the right time.</p>
+        <div class="feature-row"><span class="feature-icon">◷</span><div><b>Gentle reminders</b><small>Plan one-time and daily tasks.</small></div></div>
+        <div class="feature-row"><span class="feature-icon">↻</span><div><b>Synced task list</b><small>Your tasks are saved to your private account.</small></div></div>
+        <div class="tiny-note">Made for your desk, your projects and your real life.</div>
+      </div>
+      <div class="auth-card">
+        <div class="card-kicker">WELCOME TO DESKCUE</div>
+        <h2 id="authTitle">Sign in to your planner</h2>
+        <p id="authSubtitle" class="muted">Pick up where you left off.</p>
+        <form id="authForm">
+          <label for="authEmail">Email address</label>
+          <input id="authEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+          <label for="authPassword">Password</label>
+          <input id="authPassword" name="password" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
+          <button id="authSubmit" class="button button-primary button-wide" type="submit">Sign in <span>→</span></button>
+        </form>
+        <p id="authMessage" class="form-message" aria-live="polite"></p>
+        <div class="auth-switch"><span id="switchPrompt">New here?</span> <button id="authModeBtn" class="inline-button" type="button">Create an account</button></div>
+        <p class="privacy-note"><span>▣</span> Only your signed-in account can access its saved tasks.</p>
+      </div>
+    </section>
+
+    <section id="appView" class="app-view hidden">
+      <div class="welcome-row">
+        <div><div class="eyebrow"><span class="sparkle">✳</span> YOUR PERSONAL TASK SPACE</div><h1>Your day,<br class="mobile-break"> <em>with a little more clarity.</em></h1><p class="lead">Add a task here and keep your reminder list in one place.</p></div>
+        <div class="date-pill"><span class="date-icon">▦</span><span><b id="todayLabel">Today</b><small>YOUR PLANNER</small></span></div>
+      </div>
+      <div class="stats-grid">
+        <article class="stat-card"><span class="stat-glyph orange">◷</span><div><span class="stat-label">ALL TASKS</span><strong id="totalCount">0</strong></div></article>
+        <article class="stat-card"><span class="stat-glyph green">✓</span><div><span class="stat-label">ENABLED</span><strong id="enabledCount">0</strong></div></article>
+        <article class="stat-card"><span class="stat-glyph blue">↻</span><div><span class="stat-label">DAILY ROUTINES</span><strong id="dailyCount">0</strong></div></article>
+      </div>
+
+      <div class="workspace-grid">
+        <section class="panel task-panel">
+          <div class="panel-heading"><div><span class="section-kicker">YOUR SCHEDULE</span><h2>Tasks <span class="count-chip" id="taskCountChip">0</span></h2></div><button id="newTaskBtn" class="button button-primary" type="button">＋ Add task</button></div>
+          <div class="filter-row"><div class="filter-tabs" role="group" aria-label="Filter tasks"><button class="filter-tab active" data-filter="all" type="button">All tasks</button><button class="filter-tab" data-filter="daily" type="button">Daily</button><button class="filter-tab" data-filter="once" type="button">One-time</button></div><button id="refreshBtn" class="icon-button" type="button" title="Refresh tasks" aria-label="Refresh tasks">↻</button></div>
+          <div id="loadingTasks" class="empty-state"><span class="loader"></span><p>Loading your tasks…</p></div>
+          <div id="taskList" class="task-list hidden"></div>
+          <div id="emptyTasks" class="empty-state hidden"><div class="empty-illustration">✳</div><h3>No tasks yet</h3><p>Start small. Add one thing you want to remember.</p><button class="button button-secondary" id="emptyAddBtn" type="button">＋ Create your first task</button></div>
+        </section>
+
+        <aside class="panel editor-panel" id="editorPanel">
+          <div class="panel-heading editor-heading"><div><span class="section-kicker" id="editorKicker">MAKE A PLAN</span><h2 id="editorTitle">Add a task</h2></div><span class="editor-spark">✳</span></div>
+          <form id="taskForm">
+            <input id="editId" type="hidden">
+            <label for="taskTitle">What do you need to do?</label>
+            <input id="taskTitle" type="text" maxlength="80" placeholder="e.g. Study Physics" required>
+            <label for="taskType">Repeat</label>
+            <select id="taskType"><option value="daily">Every day</option><option value="once">One-time task</option></select>
+            <div id="dailyTimeWrap"><label for="dailyTime">Reminder time</label><input id="dailyTime" type="time" value="18:00" required></div>
+            <div id="onceTimeWrap" class="hidden"><label for="onceDateTime">Date and time</label><input id="onceDateTime" type="datetime-local"></div>
+            <label for="durationMinutes">How long?</label>
+            <div class="input-suffix"><input id="durationMinutes" type="number" min="1" max="1440" value="30" required><span>minutes</span></div>
+            <label class="check-row" for="untilNext"><input id="untilNext" type="checkbox"><span class="fake-check"></span><span><b>Until the next task</b><small>End this task when another scheduled task starts.</small></span></label>
+            <label class="check-row enabled-check" for="taskEnabled"><input id="taskEnabled" type="checkbox" checked><span class="fake-check"></span><span><b>Task is enabled</b><small>Turn off to pause its reminders.</small></span></label>
+            <div class="form-actions"><button id="cancelEditBtn" class="button button-secondary hidden" type="button">Cancel</button><button id="saveTaskBtn" class="button button-primary button-wide" type="submit">Save task <span>→</span></button></div>
+            <p id="taskMessage" class="form-message" aria-live="polite"></p>
+          </form>
+          <div class="editor-footnote"><span>⌁</span> Changes save to your Supabase account.</div>
+        </aside>
+      </div>
+      <footer class="app-footer"><span>DESKCUE • PERSONAL TASK PLANNER</span><span id="lastSynced">Not synced yet</span></footer>
+    </section>
+    <footer class="site-footer"><span>DESKCUE</span><span>Small steps still move you forward.</span></footer>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
